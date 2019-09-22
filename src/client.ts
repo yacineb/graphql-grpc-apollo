@@ -5,12 +5,12 @@ const grpc = require('grpc')
 const PROTO_PATH = path.resolve(__dirname, './protos/graphql.proto')
 
 const pd = protoLoader.loadSync(PROTO_PATH)
-const {netkin} = grpc.loadPackageDefinition(pd)
+const {yb} = grpc.loadPackageDefinition(pd)
 
 import {serialize} from "./serialization"
 
 function main () {
-  var client = new netkin.GraphqlService('localhost:50051', grpc.credentials.createInsecure())
+  var client = new yb.GraphqlService('localhost:50051', grpc.credentials.createInsecure())
   
   const request = {
     opname: "test",
