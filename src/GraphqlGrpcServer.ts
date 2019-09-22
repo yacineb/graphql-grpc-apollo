@@ -4,7 +4,6 @@ import Mali from "mali"
 import {serialize, deserialize} from "./serialization"
 import { GraphQLSchema, parse } from "graphql";
 import { execute } from 'graphql/execution';
-import { pipeline } from "stream";
 
 //request pipeline
 // https://github.com/apollographql/apollo-server/blob/master/packages/apollo-server-core/src/requestPipeline.ts
