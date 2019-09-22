@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package netkin;
+
+message GraphqlRequest {
+
+  // Operation name
+  string opname = 1;
+
+  // request (mutation/query/subscription)
+  string request = 2;
+
+  // context (json)
+  bytes context = 3;
+
+  // request variables (json)
+  bytes variableValues = 4;
+}
+
+
+message GraphqlResult {
+
+  // data returned by graphql (json)
+  bytes data = 1;
+
+  // response errors
+  repeated bytes errors = 2;
+}
+
+service GraphqlService {
+  rpc process (GraphqlRequest) returns (GraphqlResult);
+}
