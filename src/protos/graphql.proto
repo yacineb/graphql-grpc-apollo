@@ -15,6 +15,9 @@ message GraphqlRequest {
 
   // request variables (json)
   bytes variableValues = 4;
+
+  // message extensions (correlationid, auth tokens etc) for apollo graphql
+  bytes extensions = 5;
 }
 
 

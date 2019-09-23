@@ -4,7 +4,7 @@ import Mali from "mali";
 import { serialize, deserialize } from "./serialization";
 import { GraphQLSchema, parse } from "graphql";
 import { execute } from "graphql/execution";
-import { GrpcRequest } from "./types";
+import { GqlRequest } from "./types";
 
 //request pipeline
 // https://github.com/apollographql/apollo-server/blob/master/packages/apollo-server-core/src/requestPipeline.ts
@@ -13,8 +13,20 @@ import { GrpcRequest } from "./types";
 //https://github.com/apollographql/apollo-server/blob/master/packages/apollo-server-core/src/ApolloServer.ts
 
 export interface ServerConfig {
+  /**
+   * Grpc endpoint
+   */
   endpoint: string;
+
+  /**
+   * Graphql schema definition
+   */
   schema: GraphQLSchema;
+
+  /**
+   * Request context decorator
+   */
+  ctxDecorator?: <TContext = any>(req: GqlRequest) => TContext;
 }
 export class GraphqlGrpcServer {
   constructor(protected readonly config: ServerConfig) {}
@@ -23,16 +35,19 @@ export class GraphqlGrpcServer {
    * Decodes incoming
    * @param request incoming Grpc message
    */
-  public decode(request: Mali.Request): GrpcRequest {
+  public decode(request: Mali.Request): GqlRequest {
+    const context = deserialize(request.req.context);
+    const variableValues = deserialize(request.req.variableValues);
+
     return {
       opname: request.req.opname as string,
       request: request.req.request as string,
-      context: deserialize(request.req.context),
-      variableValues: deserialize(request.req.variableValues),
+      context,
+      variableValues,
     };
   }
 
-  private async processGqlRequest(req: GrpcRequest) {
+  private async processGqlRequest(req: GqlRequest) {
     const requestDoc = parse(req.request);
 
     const graphqlResult = await execute({
@@ -62,6 +77,10 @@ export class GraphqlGrpcServer {
     app.use({
       process: async (ctx: Mali.Context) => {
         const graphqlReq = this.decode(ctx.request);
+
+        if (this.config.ctxDecorator) {
+          graphqlReq.context = this.config.ctxDecorator(graphqlReq);
+        }
 
         console.info(
           "Received request\n" + JSON.stringify(graphqlReq, null, 2)

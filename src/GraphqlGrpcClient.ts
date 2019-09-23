@@ -1,4 +1,4 @@
-import { GrpcRequest, GrpcResponse } from "./types";
+import { GqlRequest, GqlResponse } from "./types";
 
 import path from "path";
 import grpc from "grpc";
@@ -33,10 +33,10 @@ export class GraphqlGrpcClient {
    *
    * @param req request payload
    */
-  public request(req: GrpcRequest) {
+  public request(req: GqlRequest) {
     const client = this.getClient(this.endpoint);
 
-    return new Promise<GrpcResponse>((resolve, reject) => {
+    return new Promise<GqlResponse>((resolve, reject) => {
       client.process(req, function(err, response) {
         if (err) {
           reject(err);

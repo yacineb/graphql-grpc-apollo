@@ -1,4 +1,4 @@
-export interface GrpcRequest {
+export interface GqlRequest {
   // Operation name
   readonly opname?: string;
 
@@ -6,13 +6,18 @@ export interface GrpcRequest {
   readonly request: string;
 
   // context (json)
-  readonly context?: object;
+  context?: object;
 
   // request variables (json)
   readonly variableValues?: { [key: string]: any };
+
+  /**
+   * Request extensions used for apollo compatibility
+   */
+  extensions?: any;
 }
 
-export interface GrpcResponse {
+export interface GqlResponse {
   // data
   readonly data?: any;
 
