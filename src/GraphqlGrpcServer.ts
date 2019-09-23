@@ -1,83 +1,75 @@
-import path from "path"
-import Mali from "mali"
+import path from "path";
+import Mali from "mali";
 
-import {serialize, deserialize} from "./serialization"
+import { serialize, deserialize } from "./serialization";
 import { GraphQLSchema, parse } from "graphql";
-import { execute } from 'graphql/execution';
+import { execute } from "graphql/execution";
+import { GrpcRequest } from "./types";
 
 //request pipeline
 // https://github.com/apollographql/apollo-server/blob/master/packages/apollo-server-core/src/requestPipeline.ts
 
-//build schema 
+//build schema
 //https://github.com/apollographql/apollo-server/blob/master/packages/apollo-server-core/src/ApolloServer.ts
-interface GraphQLRequest{
-    // Operation name
-    readonly opname?: string;
-      
-    // request (mutation/query/subscription)
-    readonly request: string;
-      
-    // context (json)
-    readonly context?: object;
-      
-    // request variables (json)
-    readonly variableValues?: {[key: string]: any}
-}
 
+export interface ServerConfig {
+  endpoint: string;
+  schema: GraphQLSchema;
+}
 export class GraphqlGrpcServer {
-    constructor(protected readonly endpoint: string, 
-        protected readonly schema : GraphQLSchema) {
-    }
+  constructor(protected readonly config: ServerConfig) {}
 
-    /**
-     * Decodes incoming
-     * @param request incoming Grpc message
-     */
-    public decode(request: Mali.Request) : GraphQLRequest{
-        return {
-            opname: request.req.opname as string,
-            request: request.req.request as string,
-            context: deserialize(request.req.context),
-            variableValues: deserialize(request.req.variableValues),
-        }
-    }
+  /**
+   * Decodes incoming
+   * @param request incoming Grpc message
+   */
+  public decode(request: Mali.Request): GrpcRequest {
+    return {
+      opname: request.req.opname as string,
+      request: request.req.request as string,
+      context: deserialize(request.req.context),
+      variableValues: deserialize(request.req.variableValues),
+    };
+  }
 
-    private async processGqlRequest(req: GraphQLRequest){
-        const requestDoc = parse(req.request);
+  private async processGqlRequest(req: GrpcRequest) {
+    const requestDoc = parse(req.request);
 
-        const graphqlResult = await execute({
-            schema: this.schema,
-            document: requestDoc,
-            variableValues: req.variableValues,
-            operationName: req.opname,
-        })
-        
-        const errors = graphqlResult.errors ? serialize(graphqlResult.errors) : undefined;
-        const data = graphqlResult.data ? serialize(graphqlResult.data) : undefined;
+    const graphqlResult = await execute({
+      schema: this.config.schema,
+      document: requestDoc,
+      variableValues: req.variableValues,
+      operationName: req.opname,
+      contextValue: req.context,
+    });
 
-        return {
-            data,
-            errors
-        }
-    }
+    const errors = graphqlResult.errors
+      ? serialize(graphqlResult.errors)
+      : undefined;
+    const data = graphqlResult.data ? serialize(graphqlResult.data) : undefined;
 
-    public async start() {
-        const protoPath = path.join(__dirname, "./protos/graphql.proto");
+    return {
+      data,
+      errors,
+    };
+  }
 
-        const app = new Mali(protoPath)
+  public async start() {
+    const protoPath = path.join(__dirname, "./protos/graphql.proto");
 
-        app.use({ process: async (ctx: Mali.Context) => {
-            const graphqlReq = this.decode(ctx.request)
+    const app = new Mali(protoPath);
 
-            console.info("Received request\n" + JSON.stringify(graphqlReq, null, 2))
-            ctx.res = await this.processGqlRequest(graphqlReq)
-        }})
+    app.use({
+      process: async (ctx: Mali.Context) => {
+        const graphqlReq = this.decode(ctx.request);
 
-        return app.start(this.endpoint)
-    }
+        console.info(
+          "Received request\n" + JSON.stringify(graphqlReq, null, 2)
+        );
+        ctx.res = await this.processGqlRequest(graphqlReq);
+      },
+    });
+
+    return app.start(this.config.endpoint);
+  }
 }
-
-
-(async ()=> {
-   await new GraphqlGrpcServer("localhost:50051", null).start();
-})();

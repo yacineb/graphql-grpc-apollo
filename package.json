@@ -4,10 +4,10 @@
   "description": "GraphQl server using grPC transport layer",
   "main": "index",
   "scripts": {
-    "test:gql": "ts-node src/testGql.ts",
-    "test:server": "ts-node src/GraphqlGrpcServer.ts",
-    "test:client": "ts-node src/client.ts",
+    "test:server": "nodemon --inspect  dist/test/server.js",
+    "test:client": "node dist/test/client.js",
     "build": "tsc && npm run cp-protos",
+    "watch": "tsc --w",
     "cp-protos": "copyfiles --flat src/protos/*.proto dist/protos"
   },
   "author": "Yacine Bouraoui",
@@ -23,8 +23,10 @@
     "@types/graphql": "^14.5.0",
     "@types/lodash": "^4.14.138",
     "copyfiles": "^2.1.1",
+    "express": "^4.17.1",
     "lodash": "3.10.1",
-    "ts-node": "^8.4.1",
-    "typescript": "^3.6.3"
+    "nodemon": "^1.19.2",
+    "typescript": "^3.6.3",
+    "apollo-server": "^2.9.3"
   }
 }
