@@ -7,6 +7,11 @@ export interface Options {
    * gRpc server endpoint
    */
   endpoint: string;
+
+  /**
+   * Request context decorator (Context middleware)
+   */
+  ctxDecorator?: <TContext = any>(req: GqlRequest) => TContext;
 }
 
 function mapToGqlRequest(operation: Operation): GqlRequest {
@@ -27,6 +32,10 @@ export const createGrpcLink = (options: Options) => {
   const client = new GraphqlGrpcClient(options.endpoint);
   return new ApolloLink(operation => {
     const req = mapToGqlRequest(operation);
+
+    if (options.ctxDecorator) {
+      options.ctxDecorator(req);
+    }
 
     return new Observable(observer => {
       client
