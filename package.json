@@ -15,7 +15,7 @@
   "dependencies": {
     "@grpc/proto-loader": "^0.5.5",
     "graphql": "^15.3.0",
-    "grpc": "^1.24.3",
+    "grpc": "^1.24.9",
     "mali": "^0.21.0",
     "graphql-tools": "^6.2.2",
     "apollo-link": "^1.2.14"
